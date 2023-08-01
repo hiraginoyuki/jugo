@@ -36,11 +36,13 @@ mod testoooooo {
     }
 }
 
+////////////////////
+
 pub trait Puzzle<T> {
     fn shape(&self) -> Vec2<usize>;
 
     fn slide_from(&mut self, idx: Vec2<usize>);
-    fn slide_to(&mut self, direction: Direction, num_pieces: usize);
+    fn slide_toward(&mut self, direction: Direction, num_pieces: usize);
 }
 
 ////////////////////
