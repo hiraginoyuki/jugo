@@ -6,7 +6,11 @@ edition = "2021"
 [dependencies]
 ndarray = "0.15"
 num-traits = "0.2"
-vek = "0.15"
+vek = "0.16.1"
+ignore = { git = "https://github.com/hiraginoyuki/rust-ignore" }
+
+[profile.dev.package."*"]
+opt-level = 3
 
 # [dev-dependencies]
 # criterion = "0.4"
