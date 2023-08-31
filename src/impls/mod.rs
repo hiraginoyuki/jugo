@@ -1,3 +1,3 @@
-// pub mod stack;
-pub mod vec;
-// pub mod ndarray;
+pub mod heap;
+pub mod stack;
+pub mod ndarray;
