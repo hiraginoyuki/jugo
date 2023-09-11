@@ -1,16 +1,15 @@
-use ndarray::{Array2, array, s};
+use ndarray::{array, s, Array2};
 use num::Integer;
 use omniswap::{rotate, swap};
 use rand::{seq::SliceRandom, Rng};
 
-use core::fmt::Debug;
+use core::fmt::{self, Debug, Display};
 use core::hint::unreachable_unchecked;
+use core::mem;
 use core::ops::Index;
 use core::{cmp::Ordering, iter::once};
-use core::mem;
-use std::fmt::Display;
 
-use crate::{is_solvable, Puzzle, Piece};
+use crate::{is_solvable, Piece, Puzzle};
 
 #[derive(Clone)]
 pub struct NdArrayPuzzle<T: Piece> {
@@ -25,13 +24,13 @@ impl Default for NdArrayPuzzle<u8> {
                 [1, 2, 3, 4],
                 [5, 6, 7, 8],
                 [9, 10, 11, 0],
-            ]
+            ],
         }
     }
 }
 
 impl<T: Piece + Debug> Debug for NdArrayPuzzle<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "StackPuzzle [")?;
 
         for row in self.inner.rows() {
@@ -149,7 +148,7 @@ impl<T: Piece> Puzzle<T> for NdArrayPuzzle<T> {
                     // c
                     // _ < empty
                     Less => self.inner.slice_mut(s![from.1..=empty.1; -1, empty.0]),
-                    
+
                     // SAFETY: matched above in the definition of `ordering_equal`
                     Equal => unsafe { unreachable_unchecked() },
                 };
@@ -170,7 +169,7 @@ impl<T: Piece> Puzzle<T> for NdArrayPuzzle<T> {
 }
 
 impl<T: Piece + Display + Eq> Display for NdArrayPuzzle<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let (width, height) = self.shape();
         let digits = ((width * height - 1) as f32).log10() as usize + 1;
         for row in self.inner.rows() {
@@ -188,10 +187,7 @@ impl<T: Piece + Display + Eq> Display for NdArrayPuzzle<T> {
 }
 
 impl<T: Piece> NdArrayPuzzle<T> {
-    pub fn random_with_rng(
-        rng: &mut (impl Rng + ?Sized),
-        (width, height): (usize, usize),
-    ) -> Self {
+    pub fn random_with_rng(rng: &mut (impl Rng + ?Sized), (width, height): (usize, usize)) -> Self {
         let len = width * height;
         let mut pieces: Vec<T> = (1_usize..len)
             .chain(once(0))
@@ -223,7 +219,7 @@ impl<T: Piece> NdArrayPuzzle<T> {
         }
 
         Self {
-            inner: Array2::from_shape_vec((height, width), pieces).unwrap()
+            inner: Array2::from_shape_vec((height, width), pieces).unwrap(),
         }
     }
 

@@ -5,9 +5,9 @@ mod direction;
 pub use direction::Direction;
 
 mod impls;
-pub use impls::stack::StackPuzzle;
 pub use impls::heap::BoxPuzzle;
 pub use impls::ndarray::NdArrayPuzzle;
+pub use impls::stack::StackPuzzle;
 
 pub trait Piece: Clone + Integer + NumCast {}
 impl<T: Clone + Integer + NumCast> Piece for T {}
@@ -15,6 +15,18 @@ impl<T: Clone + Integer + NumCast> Piece for T {}
 pub trait Puzzle<T: Piece>: core::ops::Index<(usize, usize)> {
     fn shape(&self) -> (usize, usize);
     fn index_of(&self, value: T) -> Option<(usize, usize)>;
+
+    // 0 1 2
+    // 3 4 5
+    // 6 7 8
+    // type Iter: Iterator<Item = (usize, T)>;
+    // fn iter_indexed(&self) -> Self::Iter;
+
+    // (0,0) (1,0) (2,0)
+    // (0,1) (1,1) (2,1)
+    // (0,2) (1,2) (2,2)
+    // type Iter2d: Iterator<Item = ((usize, usize), T)>;
+    // fn iter_indexed_2d(&self) -> Self::Iter2d;
 
     fn slide_from(&mut self, from: (usize, usize)) -> Option<usize>;
     fn slide_towards(&mut self, direction: Direction, distance: usize) -> Option<usize> {
@@ -24,10 +36,14 @@ pub trait Puzzle<T: Piece>: core::ops::Index<(usize, usize)> {
             .expect("potential BUG: could not find an empty piece");
 
         let direction: (isize, isize) = direction.into();
-    
+
         self.slide_from((
-            zero.0.saturating_add_signed(-direction.0.saturating_mul(distance as isize)).clamp(0, width),
-            zero.1.saturating_add_signed(-direction.1.saturating_mul(distance as isize)).clamp(0, height),
+            zero.0
+                .saturating_add_signed(-direction.0.saturating_mul(distance as isize))
+                .clamp(0, width),
+            zero.1
+                .saturating_add_signed(-direction.1.saturating_mul(distance as isize))
+                .clamp(0, height),
         ))
     }
 }
@@ -43,10 +59,7 @@ fn is_solvable_works() {
 }
 
 #[allow(dead_code)]
-pub(crate) fn is_solvable<T: Piece>(
-    pieces: &[T],
-    width: usize,
-) -> bool {
+pub(crate) fn is_solvable<T: Piece>(pieces: &[T], width: usize) -> bool {
     debug_assert!(width >= 2);
     debug_assert!(pieces.len() >= 4);
     debug_assert!(pieces.len() % width == 0);
@@ -73,7 +86,11 @@ pub(crate) fn is_solvable<T: Piece>(
         }
         _ => {
             // even, also swap with the second last piece
-            rotate!(&mut pieces[empty_idx], &mut pieces[last_idx - 1], &mut pieces[last_idx]);
+            rotate!(
+                &mut pieces[empty_idx],
+                &mut pieces[last_idx - 1],
+                &mut pieces[last_idx]
+            );
         }
     }
 

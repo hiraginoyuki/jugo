@@ -1,4 +1,4 @@
-use jugo::{Puzzle, StackPuzzle, Direction::*};
+use jugo::{Direction::*, Puzzle, StackPuzzle};
 
 fn main() {
     let mut p = StackPuzzle::default();

@@ -1,13 +1,13 @@
-use core::fmt::Debug;
-use std::process;
+use core::fmt::{self, Debug};
 use std::io::prelude::*;
+use std::process;
 
-use console::{Term, Key, style};
+use console::{style, Key, Term};
 use derive_more::{Deref, DerefMut, Display};
 use itertools::Itertools;
-use rand::{Rng, rngs::ThreadRng};
+use rand::{rngs::ThreadRng, Rng};
 
-use jugo::{Puzzle, Piece, NdArrayPuzzle};
+use jugo::{NdArrayPuzzle, Piece, Puzzle};
 
 #[derive(Deref, DerefMut, Display)]
 #[display(fmt = "{}", inner)]
@@ -17,8 +17,8 @@ struct PuzzleBox<T: Piece, R: Rng> {
     inner: NdArrayPuzzle<T>,
     rng: R,
 }
-impl<T: Piece + Debug, R: Rng> core::fmt::Debug for PuzzleBox<T, R> {
-    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<T: Piece + Debug, R: Rng> Debug for PuzzleBox<T, R> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         write!(f, "PuzzleBox({:?})", self.inner)
     }
 }
@@ -73,15 +73,18 @@ fn main() {
 
     macro_rules! slide_towards {
         ($direction: ident) => {
-            puzzle.slide_towards($direction, 1)
-                .or(Some(0))
-                .map(|d| (match $direction {
-                    Up => '↑',
-                    Down => '↓',
-                    Left => '←',
-                    Right => '→',
-                }, d))
-        }
+            puzzle.slide_towards($direction, 1).or(Some(0)).map(|d| {
+                (
+                    match $direction {
+                        Up => '↑',
+                        Down => '↓',
+                        Left => '←',
+                        Right => '→',
+                    },
+                    d,
+                )
+            })
+        };
     }
 
     use jugo::Direction::*;
@@ -98,12 +101,10 @@ fn main() {
             Key::ArrowDown => slide_towards!(Down),
             Key::ArrowLeft => slide_towards!(Left),
             Key::ArrowRight => slide_towards!(Right),
-            Key::Char(c) => key_to_index(c)
-                .and_then(|idx| puzzle.slide_from(idx)
-                    .or(Some(0))
-                    .map(|d| (c, d))
-                ),
-            _ => None
+            Key::Char(c) => {
+                key_to_index(c).and_then(|idx| puzzle.slide_from(idx).or(Some(0)).map(|d| (c, d)))
+            }
+            _ => None,
         };
 
         if let Some(a) = moved {
@@ -119,10 +120,12 @@ fn main() {
 
         let history = history
             .iter()
-            .map(|(c, d)| if *d == 0 {
-                style(c).bright().black()
-            } else {
-                style(c)
+            .map(|(c, d)| {
+                if *d == 0 {
+                    style(c).bright().black()
+                } else {
+                    style(c)
+                }
             })
             .join("");
 

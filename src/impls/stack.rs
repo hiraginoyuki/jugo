@@ -1,10 +1,10 @@
 use core::cmp::Ordering;
-use core::fmt::Debug;
+use core::fmt::{self, Debug};
 use core::hint::unreachable_unchecked;
 use core::mem;
 use core::ops::Index;
 
-use crate::{Puzzle, Piece};
+use crate::{Piece, Puzzle};
 
 #[derive(Clone)]
 pub struct StackPuzzle<const W: usize, const H: usize, T: Piece> {
@@ -16,7 +16,7 @@ ignore::ignore! {
     where
         T: num::Integer + Debug,
     {
-        fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
             if f.alternate() {
                 write!(f, "{:#?}", self.pieces)
             } else {
@@ -26,9 +26,8 @@ ignore::ignore! {
     }
 }
 
-impl<const W: usize, const H: usize, T: Piece + Debug> Debug for StackPuzzle<W, H, T>
-{
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+impl<const W: usize, const H: usize, T: Piece + Debug> Debug for StackPuzzle<W, H, T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         writeln!(f, "StackPuzzle [")?;
 
         for row in self.pieces.iter() {
@@ -85,6 +84,16 @@ impl<const W: usize, const H: usize, T: Piece> Puzzle<T> for StackPuzzle<W, H, T
                 .map(|col| (col, row))
         })
     }
+
+    // type Iter = _;
+    // fn iter_indexed(&self) -> _ {
+    //     self.pieces.iter().enumerate()
+    // }
+
+    // type Iter2d = _;
+    // fn iter_indexed_2d(&self) -> Self::Iter {
+    //     self.iter_indexed().map(|(idx, p)| ((idx % W, idx / W), p))
+    // }
 
     fn slide_from(&mut self, from: (usize, usize)) -> Option<usize> {
         use core::cmp::Ordering::*;
@@ -143,7 +152,9 @@ impl<const W: usize, const H: usize, T: Piece> Puzzle<T> for StackPuzzle<W, H, T
 
                 let column = self.pieces.iter_mut().map(|row| &mut row[from.0]);
                 let column: &mut dyn Iterator<Item = _> = match ordering.1 {
-                    Less => iterators.0.insert(column.skip(from.1).take(distance + 1).rev()),
+                    Less => iterators
+                        .0
+                        .insert(column.skip(from.1).take(distance + 1).rev()),
                     Greater => iterators.1.insert(column.skip(empty.1).take(distance + 1)),
 
                     // SAFETY: matched above in the definition of `ordering_equal`

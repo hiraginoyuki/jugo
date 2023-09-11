@@ -2,29 +2,26 @@ use num::Integer;
 use omniswap::{rotate, swap};
 use rand::{seq::SliceRandom, Rng};
 
-use core::fmt::Debug;
+use core::fmt::{self, Debug, Display};
 use core::hint::unreachable_unchecked;
+use core::mem;
 use core::ops::Index;
 use core::{cmp::Ordering, iter::once};
-use core::mem;
-use std::fmt::Display;
 
-use crate::{is_solvable, Puzzle, Piece};
+use crate::{is_solvable, Piece, Puzzle};
 
 #[derive(Clone)]
 pub struct BoxPuzzle<T: Piece> {
-    pieces: Box<[T]>,
+    inner: Box<[T]>,
     width: usize,
-    height: usize,
 }
 
 impl Default for BoxPuzzle<u8> {
     fn default() -> Self {
         Self {
             width: 4,
-            height: 4,
             #[rustfmt::skip]
-            pieces: [
+            inner: [
                 1, 2, 3, 4,
                 5, 6, 7, 8,
                 9, 10, 11, 12,
@@ -35,10 +32,10 @@ impl Default for BoxPuzzle<u8> {
 }
 
 impl<T: Piece + Debug> Debug for BoxPuzzle<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "StackPuzzle [")?;
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "BoxPuzzle [")?;
 
-        for row in self.pieces.chunks(self.width) {
+        for row in self.inner.chunks(self.width) {
             write!(f, "  [")?;
 
             let mut first = true;
@@ -51,9 +48,10 @@ impl<T: Piece + Debug> Debug for BoxPuzzle<T> {
                 write!(f, "{:?}", piece)?;
             }
 
+            ignore::ignore!(The quick brown fox jumps);
+
             writeln!(f, "],")?;
         }
-
         write!(f, "]")
     }
 }
@@ -61,24 +59,26 @@ impl<T: Piece + Debug> Debug for BoxPuzzle<T> {
 impl<T: Piece> Index<(usize, usize)> for BoxPuzzle<T> {
     type Output = T;
     fn index(&self, (x, y): (usize, usize)) -> &Self::Output {
-        &self.pieces[x * self.width + y]
+        &self.inner[x * self.width + y]
     }
 }
 
 impl<T: Piece> Puzzle<T> for BoxPuzzle<T> {
+    #[inline]
     fn shape(&self) -> (usize, usize) {
-        (self.width, self.height)
+        (self.width, self.inner.len() / self.width)
     }
 
     fn index_of(&self, value: T) -> Option<(usize, usize)> {
-        self.pieces
+        self.inner
             .iter()
             .position(|x| *x == value)
             .map(|idx| (idx % self.width, idx / self.width))
     }
 
     fn slide_from(&mut self, from: (usize, usize)) -> Option<usize> {
-        if !matches!(from, (x, y) if x < self.width && y < self.height) {
+        let (width, height) = self.shape();
+        if !matches!(from, (x, y) if x < width && y < height) {
             return None;
         }
 
@@ -86,7 +86,9 @@ impl<T: Piece> Puzzle<T> for BoxPuzzle<T> {
             .index_of(num::zero())
             .expect("potential BUG: could not find an empty piece");
 
-        // e.g) ordering.0 == Less if from.0 < empty.0
+        // Ord::cmp(&1, &0) == Ordering::Greater
+        // Ord::cmp(&1, &1) == Ordering::Equal
+        // Ord::cmp(&1, &2) == Ordering::Less
         #[rustfmt::skip]
         let ordering = (
             Ord::cmp(&from.0, &empty.0),
@@ -106,7 +108,7 @@ impl<T: Piece> Puzzle<T> for BoxPuzzle<T> {
 
             // y (outer index) is aligned; `copy_within`-optimized swapping
             (false, true) => {
-                let row = &mut self.pieces[from.1 * self.width..(from.1 + 1) * self.width];
+                let row = &mut self.inner[from.1 * self.width..(from.1 + 1) * self.width];
 
                 use core::cmp::Ordering::*;
                 match ordering.0 {
@@ -131,10 +133,15 @@ impl<T: Piece> Puzzle<T> for BoxPuzzle<T> {
 
                 let mut iterators = (None, None);
 
-                let column = self.pieces.chunks_mut(self.width).map(|row| &mut row[from.0]);
+                let column = self
+                    .inner
+                    .chunks_mut(self.width)
+                    .map(|row| &mut row[from.0]);
                 use core::cmp::Ordering::*;
                 let column: &mut dyn Iterator<Item = _> = match ordering.1 {
-                    Less => iterators.0.insert(column.skip(from.1).take(distance + 1).rev()),
+                    Less => iterators
+                        .0
+                        .insert(column.skip(from.1).take(distance + 1).rev()),
                     Greater => iterators.1.insert(column.skip(empty.1).take(distance + 1)),
 
                     // SAFETY: matched above in the definition of `ordering_equal`
@@ -155,12 +162,12 @@ impl<T: Piece> Puzzle<T> for BoxPuzzle<T> {
     }
 }
 
-impl<T: Piece + Display + Eq> Display for BoxPuzzle<T> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let digits = ((self.width * self.height - 1) as f32).log10() as usize + 1;
-        for row in self.pieces.chunks(self.width) {
+impl<T: Piece + Display> Display for BoxPuzzle<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let digits = ((self.inner.len() - 1) as f32).log10() as usize + 1;
+        for row in self.inner.chunks(self.width) {
             for piece in row {
-                if *piece == T::zero() {
+                if piece.is_zero() {
                     write!(f, "{: >digits$} ", "")?;
                 } else {
                     write!(f, "{: >digits$} ", piece)?;
@@ -173,10 +180,7 @@ impl<T: Piece + Display + Eq> Display for BoxPuzzle<T> {
 }
 
 impl<T: Piece> BoxPuzzle<T> {
-    pub fn random_with_rng(
-        rng: &mut (impl Rng + ?Sized),
-        (width, height): (usize, usize),
-    ) -> Self {
+    pub fn random_with_rng(rng: &mut (impl Rng + ?Sized), (width, height): (usize, usize)) -> Self {
         let len = width * height;
         let mut pieces: Vec<T> = (1_usize..len)
             .chain(once(0))
@@ -208,13 +212,23 @@ impl<T: Piece> BoxPuzzle<T> {
         }
 
         Self {
+            inner: pieces.into_boxed_slice(),
             width,
-            height,
-            pieces: pieces.into_boxed_slice(),
         }
     }
 
     pub fn random((width, height): (usize, usize)) -> Self {
         Self::random_with_rng(&mut rand::thread_rng(), (width, height))
+    }
+
+    pub fn iter(&self) -> impl Iterator<Item = &T> {
+        self.inner.iter()
+    }
+
+    pub fn iter_indexed(&self) -> impl Iterator<Item = ((usize, usize), &T)> {
+        self.inner
+            .iter()
+            .enumerate()
+            .map(move |(idx, piece)| ((idx % self.width, idx / self.width), piece))
     }
 }
