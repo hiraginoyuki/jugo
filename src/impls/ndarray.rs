@@ -191,16 +191,17 @@ impl<T: Piece> NdArrayPuzzle<T> {
     pub fn random_with_rng(
         rng: &mut (impl Rng + ?Sized),
         (width, height): (usize, usize),
-    ) -> Option<Self> {
+    ) -> Self {
         let len = width * height;
         let mut pieces: Vec<T> = (1_usize..len)
             .chain(once(0))
             .map(num::cast)
-            .collect::<Option<_>>()?;
+            .collect::<Option<_>>()
+            .expect("could not cast pieces to usize");
 
         pieces[..len - 1].shuffle(rng);
 
-        if !is_solvable(&pieces, width)? {
+        if !is_solvable(&pieces, width) {
             pieces.swap(0, 1);
         }
 
@@ -221,12 +222,12 @@ impl<T: Piece> NdArrayPuzzle<T> {
             }
         }
 
-        Some(Self {
+        Self {
             inner: Array2::from_shape_vec((height, width), pieces).unwrap()
-        })
+        }
     }
 
-    pub fn random((width, height): (usize, usize)) -> Option<Self> {
+    pub fn random((width, height): (usize, usize)) -> Self {
         Self::random_with_rng(&mut rand::thread_rng(), (width, height))
     }
 }

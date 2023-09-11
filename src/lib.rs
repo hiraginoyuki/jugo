@@ -34,19 +34,19 @@ pub trait Puzzle<T: Piece>: core::ops::Index<(usize, usize)> {
 
 #[test]
 fn is_solvable_works() {
-    assert_eq!(is_solvable(&[1, 2, 3, 4, 5, 6, 7, 8, 0], 3), Some(true));
-    assert_eq!(is_solvable(&[2, 4, 8, 7, 6, 5, 3, 0, 1], 3), Some(true));
-    assert_eq!(is_solvable(&[2, 1, 3, 4, 8, 5, 0, 6, 7], 3), Some(true));
-    assert_eq!(is_solvable(&[1, 2, 3, 4, 5, 0, 7, 6, 8], 3), Some(false));
-    assert_eq!(is_solvable(&[2, 4, 8, 7, 0, 5, 3, 1, 6], 3), Some(false));
-    assert_eq!(is_solvable(&[2, 1, 3, 0, 8, 5, 4, 7, 6], 3), Some(false));
+    assert_eq!(is_solvable(&[1, 2, 3, 4, 5, 6, 7, 8, 0], 3), true);
+    assert_eq!(is_solvable(&[2, 4, 8, 7, 6, 5, 3, 0, 1], 3), true);
+    assert_eq!(is_solvable(&[2, 1, 3, 4, 8, 5, 0, 6, 7], 3), true);
+    assert_eq!(is_solvable(&[1, 2, 3, 4, 5, 0, 7, 6, 8], 3), false);
+    assert_eq!(is_solvable(&[2, 4, 8, 7, 0, 5, 3, 1, 6], 3), false);
+    assert_eq!(is_solvable(&[2, 1, 3, 0, 8, 5, 4, 7, 6], 3), false);
 }
 
 #[allow(dead_code)]
 pub(crate) fn is_solvable<T: Piece>(
     pieces: &[T],
     width: usize,
-) -> Option<bool> {
+) -> bool {
     debug_assert!(width >= 2);
     debug_assert!(pieces.len() >= 4);
     debug_assert!(pieces.len() % width == 0);
@@ -55,11 +55,14 @@ pub(crate) fn is_solvable<T: Piece>(
         .iter()
         .cloned()
         .map(num::cast)
-        .collect::<Option<Vec<usize>>>()?;
+        .collect::<Option<Vec<usize>>>()
+        .expect("could not cast pieces to usize");
 
     let height = pieces.len() / width;
     let last_idx = pieces.len() - 1;
-    let empty_idx = pieces.iter().position(|&p| p == 0)?;
+    let Some(empty_idx) = pieces.iter().position(|&p| p == 0) else {
+        return false;
+    };
     let empty_pos = (empty_idx % width, empty_idx / width);
 
     match (width - 1 - empty_pos.0) + (height - 1 - empty_pos.1) {
@@ -86,5 +89,5 @@ pub(crate) fn is_solvable<T: Piece>(
         }
     }
 
-    Some(swaps.is_even())
+    swaps.is_even()
 }

@@ -25,13 +25,13 @@ impl<T: Piece + Debug, R: Rng> core::fmt::Debug for PuzzleBox<T, R> {
 impl<T: Piece, R: Rng> PuzzleBox<T, R> {
     pub fn new_with_rng(mut rng: R, shape: (usize, usize)) -> Self {
         Self {
-            inner: NdArrayPuzzle::random_with_rng(&mut rng, shape).unwrap(),
+            inner: NdArrayPuzzle::random_with_rng(&mut rng, shape),
             rng,
         }
     }
     pub fn reset(&mut self) {
         let shape = self.inner.shape();
-        self.inner = NdArrayPuzzle::random_with_rng(&mut self.rng, shape).unwrap();
+        self.inner = NdArrayPuzzle::random_with_rng(&mut self.rng, shape);
     }
 }
 impl<T: Piece> PuzzleBox<T, ThreadRng> {

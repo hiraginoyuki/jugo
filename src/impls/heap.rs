@@ -173,47 +173,20 @@ impl<T: Piece + Display + Eq> Display for BoxPuzzle<T> {
 }
 
 impl<T: Piece> BoxPuzzle<T> {
-    ignore::ignore! {
-      source: "https://github.com/hiraginoyuki/15-puzzle/blob/d2ec06a0809dce4f3c08ead4af36981ea3d8f902/src/puzzle.ts#L84-L106"
-
-      public checkSolvable (): boolean {
-        const cloned = new Puzzle(this, this.width)
-        if (cloned.at(-1) !== 0) {
-          cloned.tap(cloned.width - 1, floor(cloned.indexOf(0) / cloned.width))
-          cloned.tap(cloned.width - 1, cloned.height - 1)
-        }
-        let isEven = true
-        for (let currentIndex = 0, targetIndex, targetValue, assigneeValue; currentIndex < cloned.length - 1; currentIndex++) {
-          targetValue = cloned[currentIndex]
-          targetIndex = targetValue - 1
-          if (currentIndex === targetIndex) continue
-          while (true) {
-            assigneeValue = cloned[targetIndex]
-            cloned[targetIndex] = targetValue
-            targetValue = assigneeValue
-            targetIndex = targetValue - 1
-            isEven = !isEven
-            if (currentIndex === targetIndex) break
-          }
-          cloned[targetIndex] = targetValue
-        }
-        return isEven
-      }
-    }
-
     pub fn random_with_rng(
         rng: &mut (impl Rng + ?Sized),
         (width, height): (usize, usize),
-    ) -> Option<Self> {
+    ) -> Self {
         let len = width * height;
         let mut pieces: Vec<T> = (1_usize..len)
             .chain(once(0))
             .map(num::cast)
-            .collect::<Option<_>>()?;
+            .collect::<Option<_>>()
+            .expect("could not cast pieces to usize");
 
         pieces[..len - 1].shuffle(rng);
 
-        if !is_solvable(&pieces, width)? {
+        if !is_solvable(&pieces, width) {
             pieces.swap(0, 1);
         }
 
@@ -234,14 +207,14 @@ impl<T: Piece> BoxPuzzle<T> {
             }
         }
 
-        Some(Self {
+        Self {
             width,
             height,
             pieces: pieces.into_boxed_slice(),
-        })
+        }
     }
 
-    pub fn random((width, height): (usize, usize)) -> Option<Self> {
+    pub fn random((width, height): (usize, usize)) -> Self {
         Self::random_with_rng(&mut rand::thread_rng(), (width, height))
     }
 }

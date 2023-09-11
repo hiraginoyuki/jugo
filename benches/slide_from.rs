@@ -10,13 +10,13 @@ fn bench_slide_from(c: &mut Criterion) {
         c.bench_function(&format!("BoxPuzzle, {shape:?}"), raxrdxal(
             Xoshiro256StarStar::from_rng(&mut rng).unwrap(),
             shape,
-            |rng, shape| BoxPuzzle::<u8>::random_with_rng(rng, shape).unwrap(),
+            |rng, shape| BoxPuzzle::<u8>::random_with_rng(rng, shape),
         ));
 
         c.bench_function(&format!("NdArrayPuzzle, {shape:?}"), raxrdxal(
             Xoshiro256StarStar::from_rng(&mut rng).unwrap(),
             shape,
-            |rng, shape| NdArrayPuzzle::<u8>::random_with_rng(rng, shape).unwrap(),
+            |rng, shape| NdArrayPuzzle::<u8>::random_with_rng(rng, shape),
         ));
     }
 }
