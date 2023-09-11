@@ -64,7 +64,7 @@ fn key_to_index(key: char) -> Option<(usize, usize)> {
 
 fn main() {
     let mut terminal = Term::stdout();
-    let mut puzzle = PuzzleBox::<u8, _>::new((5, 7));
+    let mut puzzle = PuzzleBox::<u8, _>::new((4, 4));
     let mut history = Vec::with_capacity(80);
 
     terminal.clear_screen().unwrap();
