@@ -4,8 +4,14 @@ use omniswap::rotate;
 mod direction;
 pub use direction::Direction;
 
-mod impls;
+mod impls {
+    pub mod heap;
+    #[cfg(feature = "ndarray")]
+    pub mod ndarray;
+    pub mod stack;
+}
 pub use impls::heap::BoxPuzzle;
+#[cfg(feature = "ndarray")]
 pub use impls::ndarray::NdArrayPuzzle;
 pub use impls::stack::StackPuzzle;
 
@@ -19,14 +25,15 @@ pub trait Puzzle<T: Piece>: core::ops::Index<(usize, usize)> {
     // 0 1 2
     // 3 4 5
     // 6 7 8
-    // type Iter: Iterator<Item = (usize, T)>;
-    // fn iter_indexed(&self) -> Self::Iter;
+    // type Iter<'a>: Iterator<Item = &'a T>
+    // where Self: 'a, T: 'a;
+    // fn iter(&self) -> Self::Iter<'_>;
 
     // (0,0) (1,0) (2,0)
     // (0,1) (1,1) (2,1)
     // (0,2) (1,2) (2,2)
     // type Iter2d: Iterator<Item = ((usize, usize), T)>;
-    // fn iter_indexed_2d(&self) -> Self::Iter2d;
+    // fn iter_indexed_2d(&self) -> eru -Self::Iter2d;
 
     fn slide_from(&mut self, from: (usize, usize)) -> Option<usize>;
     fn slide_towards(&mut self, direction: Direction, distance: usize) -> Option<usize> {

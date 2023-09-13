@@ -63,7 +63,25 @@ impl<T: Piece> Index<(usize, usize)> for BoxPuzzle<T> {
     }
 }
 
+// #[derive(Debug)]
+// struct Iter<'a, T: 'a> {
+//     inner: core::slice::Iter<'a, T>,
+// }
+// impl<'a, T> Iterator for Iter<'a, T> {
+//     type Item = &'a T;
+//     fn next(&mut self) -> Option<Self::Item> {
+//         self.inner.next()
+//     }
+// }
+
 impl<T: Piece> Puzzle<T> for BoxPuzzle<T> {
+    // type Iter<'a> = Iter<'a, T> where T: 'a;
+    // fn iter(&self) -> Self::Iter<'_> {
+    //     Iter {
+    //         inner:self.inner.iter()
+    //     }
+    // }
+
     #[inline]
     fn shape(&self) -> (usize, usize) {
         (self.width, self.inner.len() / self.width)
@@ -230,5 +248,18 @@ impl<T: Piece> BoxPuzzle<T> {
             .iter()
             .enumerate()
             .map(move |(idx, piece)| ((idx % self.width, idx / self.width), piece))
+    }
+
+    pub fn is_solved(&self) -> bool {
+        let iter_current = self.inner.iter();
+        let iter_solved = (1..self.inner.len()).chain(once(0));
+
+        for (current, solved) in iter_current.zip(iter_solved) {
+            if num::cast(current.clone()) != Some(solved) {
+                return false;
+            }
+        }
+
+        true
     }
 }

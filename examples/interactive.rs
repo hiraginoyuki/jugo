@@ -7,14 +7,14 @@ use derive_more::{Deref, DerefMut, Display};
 use itertools::Itertools;
 use rand::{rngs::ThreadRng, Rng};
 
-use jugo::{NdArrayPuzzle, Piece, Puzzle};
+use jugo::{BoxPuzzle, Piece, Puzzle};
 
 #[derive(Deref, DerefMut, Display)]
 #[display(fmt = "{}", inner)]
 struct PuzzleBox<T: Piece, R: Rng> {
     #[deref]
     #[deref_mut]
-    inner: NdArrayPuzzle<T>,
+    inner: BoxPuzzle<T>,
     rng: R,
 }
 impl<T: Piece + Debug, R: Rng> Debug for PuzzleBox<T, R> {
@@ -25,13 +25,13 @@ impl<T: Piece + Debug, R: Rng> Debug for PuzzleBox<T, R> {
 impl<T: Piece, R: Rng> PuzzleBox<T, R> {
     pub fn new_with_rng(mut rng: R, shape: (usize, usize)) -> Self {
         Self {
-            inner: NdArrayPuzzle::random_with_rng(&mut rng, shape),
+            inner: BoxPuzzle::random_with_rng(&mut rng, shape),
             rng,
         }
     }
     pub fn reset(&mut self) {
         let shape = self.inner.shape();
-        self.inner = NdArrayPuzzle::random_with_rng(&mut self.rng, shape);
+        self.inner = BoxPuzzle::random_with_rng(&mut self.rng, shape);
     }
 }
 impl<T: Piece> PuzzleBox<T, ThreadRng> {
